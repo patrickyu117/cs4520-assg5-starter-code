@@ -4,13 +4,19 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
+import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -25,10 +31,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -120,7 +130,7 @@ fun ProductListScreen(vm: ProductListViewModel = viewModel()) {
     val errorMessage by vm.error.collectAsState(null)
     val noProductsAvailable by vm.noProducts.collectAsState(false)
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    LocalLifecycleOwner.current
 
     val apiService = ApiClient.apiService
     val productDao = ProductDatabase.getInstance(context).productDao()
@@ -146,15 +156,66 @@ fun ProductListScreen(vm: ProductListViewModel = viewModel()) {
         } else {
             LazyColumn {
                 items(products) { product ->
-                    // You may need to adjust this according to your product item layout
-                    Text(text = product.name)
-                    product.expiryDate?.let { Text(text = it) }
-                    Text(text = "$" + product.price.toString())
+                    ProductListItem(
+                        productName = product.name,
+                        productExpiryDate = product.expiryDate,
+                        productPrice = product.price.toString(),
+                        productType = product.type
+                    )
                 }
             }
         }
         if (noProductsAvailable) {
             Text(text = "No products available")
+        }
+    }
+}
+
+@Composable
+fun ProductListItem(
+    productName: String,
+    productExpiryDate: String?,
+    productPrice: String,
+    productType: String
+) {
+    val lightRed = Color(0xFFE06666)
+    val lightYellow = Color(0xFFFFD965)
+    val backgroundColor = if (productType == "Food") lightRed else lightYellow
+    val image = if (productType == "Food") R.drawable.food else R.drawable.equipment
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth(),
+        elevation = 4.dp,
+        backgroundColor = backgroundColor // Apply background color based on product type
+    ) {
+        Row(
+            modifier = Modifier.padding(8.dp)
+        ) {
+            Image(
+                painter = painterResource(id = image),
+                contentDescription = "Product Image",
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier
+                    .size(60.dp)
+                    .padding(end = 16.dp)
+            )
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = productName,
+                    color = Color.Black
+                )
+                Text(
+                    text = productExpiryDate ?: "",
+                    color = Color.Black
+                )
+                Text(
+                    text = "$$productPrice",
+                    color = Color.Black
+                )
+            }
         }
     }
 }
