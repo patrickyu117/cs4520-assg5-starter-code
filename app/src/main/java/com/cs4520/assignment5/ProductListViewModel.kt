@@ -1,12 +1,19 @@
 package com.cs4520.assignment5
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 // ViewModel class for the product list
 class ProductListViewModel : ViewModel() {
@@ -24,6 +31,7 @@ class ProductListViewModel : ViewModel() {
 
     private val _noProducts = MutableStateFlow<Boolean>(false)
     val noProducts: StateFlow<Boolean> get() = _noProducts
+
 
     // Initialize the repository
     fun initialize(repository: ProductRepository) {
@@ -53,5 +61,27 @@ class ProductListViewModel : ViewModel() {
                 _loading.value = false
             }
         }
+    }
+
+    fun scheduleProductRefresh(context: Context) {
+        val workManager = WorkManager.getInstance(context)
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val productRefreshRequest = PeriodicWorkRequestBuilder<ProductRefreshWorker>(
+            repeatInterval = 1, // Repeat every hour
+            repeatIntervalTimeUnit = TimeUnit.HOURS,
+            flexTimeInterval = 15, // Flex interval is 15 minutes
+            flexTimeIntervalUnit = TimeUnit.MINUTES
+        )
+            .setConstraints(constraints)
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            "ProductRefresh",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            productRefreshRequest
+        )
     }
 }

@@ -47,6 +47,12 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 
 // Main Activity class
 class MainActivity : ComponentActivity() {
@@ -123,6 +129,7 @@ fun LoginScreen(navController: NavController) {
     }
 }
 
+
 @Composable
 fun ProductListScreen(vm: ProductListViewModel = viewModel()) {
     val products by vm.products.collectAsState(emptyList())
@@ -139,6 +146,11 @@ fun ProductListScreen(vm: ProductListViewModel = viewModel()) {
     // Initialize the repo
     vm.initialize(repo)
 
+    // Launch the work manager
+    LaunchedEffect(key1 = true) {
+        vm.scheduleProductRefresh(context)
+    }
+
     // Fetch the products when we launch this screen
     LaunchedEffect(key1 = true) {
         vm.fetchProducts()
@@ -152,6 +164,7 @@ fun ProductListScreen(vm: ProductListViewModel = viewModel()) {
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else if (errorMessage != null) {
+            Text(text = "Random Error Occurred")
             Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
         } else {
             LazyColumn {

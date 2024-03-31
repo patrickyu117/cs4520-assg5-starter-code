@@ -19,4 +19,10 @@ interface ProductDao {
     // Remove all the products from the database
     @Query("DELETE FROM product")
     suspend fun removeAll()
+
+    @Query("SELECT * FROM product WHERE name = :name")
+    suspend fun getProductById(name: String): Product?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertProduct(product: Product)
 }
